@@ -54,6 +54,9 @@ android {''', g, count=1)
 
 if 'productFlavors' not in g:
     g = re.sub(r'(?m)^android\s*\{\s*\n', '''android {
+    buildFeatures {
+        resValues = true
+    }
     flavorDimensions += "app"
     productFlavors {
         create("client") {
