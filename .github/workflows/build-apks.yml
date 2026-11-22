@@ -1,0 +1,98 @@
+name: Construire les APK (client, livreur, admin)
+
+on:
+  workflow_dispatch:      # bouton « Run workflow » ou commande gh
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write         # pour publier la version avec les APK
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lire la version de Flutter utilisée sur ton PC
+        id: fv
+        run: |
+          v="$(cat app/.flutter-version 2>/dev/null | tr -d '\r\n ')"
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "Flutter demandé : '$v'"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ steps.fv.outputs.version }}
+          channel: stable
+          cache: true
+
+      - name: Vérifier l'adresse du serveur
+        env:
+          API_BASE: ${{ vars.API_BASE }}
+        run: |
+          if [ -z "$API_BASE" ]; then echo "La variable API_BASE est vide (adresse https du serveur)."; exit 1; fi
+          echo "Serveur : $API_BASE"
+
+      - name: Générer le projet Android
+        working-directory: app
+        run: |
+          flutter create --org com.mrshawarma --project-name mrshawarma_app --platforms=android .
+          rm -f test/widget_test.dart
+          flutter pub get
+
+      - name: Clé de signature (et Firebase si fourni)
+        working-directory: app
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > android/app/release.jks
+            printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=release.jks\n' \
+              "$KEYSTORE_PASSWORD" "$KEYSTORE_PASSWORD" "$KEY_ALIAS" > android/key.properties
+            echo "Clé de signature installée."
+          else
+            echo "ATTENTION : pas de clé de signature, APK signés en debug (mises à jour impossibles)."
+          fi
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            echo "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+            echo "Firebase configuré."
+          fi
+          python3 tools/prepare_android.py
+
+      - name: Construire les 3 APK
+        working-directory: app
+        env:
+          API_BASE: ${{ vars.API_BASE }}
+        run: |
+          for pair in client:lib/main.dart livreur:lib/main_livreur.dart admin:lib/main_admin.dart; do
+            flavor="${pair%%:*}"; target="${pair#*:}"
+            echo "=== $flavor ==="
+            flutter build apk --release --flavor "$flavor" -t "$target" \
+              --dart-define=API_BASE="$API_BASE" --build-number="${{ github.run_number }}"
+          done
+
+      - name: Nommer les fichiers
+        run: |
+          mkdir -p out
+          for f in client livreur admin; do
+            cp "app/build/app/outputs/flutter-apk/app-$f-release.apk" "out/mr-shawarma-$f.apk"
+          done
+          ls -la out
+
+      - name: Publier la version (liens de téléchargement)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.${{ github.run_number }}
+          name: Mr. Shawarma v1.${{ github.run_number }}
+          make_latest: true
+          files: out/*.apk

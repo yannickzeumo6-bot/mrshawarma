@@ -1,0 +1,15 @@
+# secrets et fichiers générés
+.env
+*.jks
+*.keystore
+key.properties
+google-services.json
+firebase-credentials.json
+backend/vendor/
+backend/node_modules/
+backend/storage/logs/*.log
+backend/database/*.sqlite
+app/android/
+app/ios/
+app/build/
+app/.dart_tool/

@@ -1,0 +1,42 @@
+# Déploiement du serveur sur Render (formule gratuite) — « New + > Blueprint »
+services:
+  - type: web
+    name: mrshawarma
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /up
+    autoDeploy: true
+    envVars:
+      - key: APP_NAME
+        value: Mr Shawarma
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: PUSH_ENABLED
+        value: "false"
+      # Valeurs secrètes : Render te les demandera (le script 2 te les affiche toutes prêtes)
+      - key: APP_KEY
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: DB_URL
+        sync: false
+      - key: SEED_ADMIN_PASSWORD
+        sync: false
+      - key: SEED_LIVREUR_PASSWORD
+        sync: false
+      - key: APK_BASE_URL
+        sync: false
