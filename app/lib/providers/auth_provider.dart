@@ -37,14 +37,24 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> login(String email, String password) async {
-    final d = await _api.post('/api/auth/login', {'email': email.trim(), 'password': password});
+  /// [login] = email OU numéro de téléphone.
+  Future<void> login(String login, String password) async {
+    final d = await _api.post('/api/auth/login', {'login': login.trim(), 'password': password});
     await _accept(d);
   }
 
-  Future<void> register(String name, String email, String password) async {
-    final d = await _api.post('/api/auth/register', {'name': name.trim(), 'email': email.trim(), 'password': password});
+  Future<void> register(String name, String email, String phone, String password) async {
+    final d = await _api.post('/api/auth/register', {'name': name.trim(), 'email': email.trim(), 'phone': phone.trim(), 'password': password});
     await _accept(d);
+  }
+
+  /// Enregistre le numéro de téléphone du compte connecté (comptes créés avant l'ajout du téléphone).
+  Future<void> updatePhone(String phone) async {
+    final d = await _api.patch('/api/auth/me', {'phone': phone.trim()});
+    _user = AppUser.fromJson(d['user'] as Map<String, dynamic>);
+    final p = await SharedPreferences.getInstance();
+    await p.setString(_kUser, jsonEncode(_user!.toJson()));
+    notifyListeners();
   }
 
   Future<void> _accept(dynamic d) async {

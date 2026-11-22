@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/format.dart';
+import '../../core/phone.dart';
 import '../../core/theme.dart';
 import '../../models/models.dart';
 import '../../providers/admin_provider.dart';
@@ -139,7 +140,7 @@ class _AdminOrderCardState extends State<_AdminOrderCard> {
           ]),
         ]),
         const SizedBox(height: 2),
-        Text('${o.clientName ?? 'Client'} · ${dateTimeFr(o.placed)}', style: const TextStyle(color: Brand.dim, fontSize: 12.5)),
+        Text('${o.clientName ?? 'Client'}${o.clientPhone != null ? ' · ${prettyPhone(o.clientPhone!)}' : ''} · ${dateTimeFr(o.placed)}', style: const TextStyle(color: Brand.dim, fontSize: 12.5)),
         const SizedBox(height: 8),
         for (final it in o.items)
           Text('${it['qty']} × ${it['name']}${(it['summary'] ?? '').toString().startsWith('Saveur') ? ' · ${it['summary']}' : ''}', style: const TextStyle(fontSize: 13.5)),

@@ -24,7 +24,8 @@ class AdminProvider extends ChangeNotifier {
   AdminStats? stats;
   List<Product> products = [];
   List<Promotion> promos = [];
-  bool ordersLoaded = false, productsLoaded = false, promosLoaded = false;
+  List<Livreur> livreurs = [];
+  bool ordersLoaded = false, productsLoaded = false, promosLoaded = false, livreursLoaded = false;
   String? error;
   Set<String>? _knownRefs;
 
@@ -32,7 +33,7 @@ class AdminProvider extends ChangeNotifier {
     if (!_disposed) notifyListeners();
   }
 
-  Future<void> refreshAll() => Future.wait([loadOrders(), loadProducts(), loadPromos()]);
+  Future<void> refreshAll() => Future.wait([loadOrders(), loadProducts(), loadPromos(), loadLivreurs()]);
 
   Future<void> loadOrders() async {
     try {
@@ -54,6 +55,35 @@ class AdminProvider extends ChangeNotifier {
     }
     ordersLoaded = true;
     _notify();
+  }
+
+  Future<void> loadLivreurs() async {
+    try {
+      final d = await _api.get('/api/admin/livreurs') as Map<String, dynamic>;
+      livreurs = (d['livreurs'] as List).map((e) => Livreur.fromJson(e as Map<String, dynamic>)).toList();
+      error = null;
+    } catch (e) {
+      error = e.toString();
+    }
+    livreursLoaded = true;
+    _notify();
+  }
+
+  /// Crée un livreur (id == null) ou modifie le livreur [id]. Mot de passe vide = inchangé.
+  Future<void> saveLivreur({int? id, required String name, required String phone, required String email, required String password}) async {
+    final body = <String, dynamic>{'name': name.trim(), 'phone': phone.trim(), 'email': email.trim()};
+    if (password.isNotEmpty || id == null) body['password'] = password;
+    if (id == null) {
+      await _api.post('/api/admin/livreurs', body);
+    } else {
+      await _api.put('/api/admin/livreurs/$id', body);
+    }
+    await loadLivreurs();
+  }
+
+  Future<void> deleteLivreur(int id) async {
+    await _api.delete('/api/admin/livreurs/$id');
+    await loadLivreurs();
   }
 
   Future<void> loadProducts() async {

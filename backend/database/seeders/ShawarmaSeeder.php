@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Product;
 use App\Models\User;
+use App\Support\Phone;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -21,7 +22,7 @@ class ShawarmaSeeder extends Seeder
     public function run(): void
     {
         $this->staff('Admin Mr. Shawarma', env('SEED_ADMIN_EMAIL', 'admin@mrshawarma.cm'), env('SEED_ADMIN_PASSWORD'), 'admin');
-        $this->staff('Livreur Principal', env('SEED_LIVREUR_EMAIL', 'livreur@mrshawarma.cm'), env('SEED_LIVREUR_PASSWORD'), 'livreur');
+        $this->staff('Livreur Principal', env('SEED_LIVREUR_EMAIL', 'livreur@mrshawarma.cm'), env('SEED_LIVREUR_PASSWORD'), 'livreur', env('SEED_LIVREUR_PHONE'));
 
         $menu = [
             ['sw1', 'shawarma', 'Shawarma Pain Libanais', 'Pain libanais, viande, salade, sauce maison', 1000, [], 1],
@@ -45,11 +46,13 @@ class ShawarmaSeeder extends Seeder
         $this->command->info(count($menu) . ' produits du menu enregistrés.');
     }
 
-    private function staff(string $name, string $email, ?string $password, string $role): void
+    private function staff(string $name, string $email, ?string $password, string $role, ?string $phone = null): void
     {
         $user = User::where('email', $email)->first();
         if ($user) {
             $data = ['name' => $name, 'role' => $role];
+            $p = Phone::normalize($phone);
+            if ($p && ! User::where('phone', $p)->where('id', '!=', $user->id)->exists()) $data['phone'] = $p;
             // Réinitialisation volontaire : RESET_STAFF_PASSWORDS=true + SEED_*_PASSWORD définis (à retirer ensuite)
             $reset = $password && filter_var(env('RESET_STAFF_PASSWORDS'), FILTER_VALIDATE_BOOLEAN);
             if ($reset) $data['password'] = $password;
@@ -60,7 +63,7 @@ class ShawarmaSeeder extends Seeder
         }
         $generated = $password === null || $password === '';
         $password = $generated ? Str::password(14, symbols: false) : $password;
-        User::create(['name' => $name, 'email' => $email, 'password' => $password, 'role' => $role]);
+        User::create(['name' => $name, 'email' => $email, 'phone' => Phone::normalize($phone), 'password' => $password, 'role' => $role]);
         $this->command->warn("Compte {$role} créé : {$email}" . ($generated ? " / mot de passe : {$password}  (note-le, il ne sera plus affiché)" : ' (mot de passe défini dans .env)'));
     }
 }

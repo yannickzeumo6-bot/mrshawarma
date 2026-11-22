@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\AdminLivreurController;
 use App\Http\Controllers\Api\Admin\AdminProductController;
 use App\Http\Controllers\Api\Admin\AdminPromotionController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DeliveryController;
 use App\Http\Controllers\Api\DeviceController;
+use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentMethodController;
 use App\Http\Controllers\Api\ProductController;
@@ -24,6 +26,11 @@ Route::get('/payment-methods', [PaymentMethodController::class, 'index']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
+    Route::patch('/auth/me', [AuthController::class, 'updateMe']);
+
+    // --- Discussion client ⇄ livreur (le contrôleur vérifie l'accès à la commande) ---
+    Route::get('/orders/{ref}/messages', [MessageController::class, 'index']);
+    Route::post('/orders/{ref}/messages', [MessageController::class, 'store'])->middleware('throttle:30,1');
     Route::post('/devices', [DeviceController::class, 'store']);
     Route::delete('/devices', [DeviceController::class, 'destroy']);
 
@@ -46,6 +53,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/orders', [OrderController::class, 'index']);
         Route::get('/stats', [OrderController::class, 'statsSummary']);
         Route::patch('/orders/{ref}/set-status', [OrderController::class, 'adminSetStatus']);
+
+        Route::get('/livreurs', [AdminLivreurController::class, 'index']);
+        Route::post('/livreurs', [AdminLivreurController::class, 'store']);
+        Route::put('/livreurs/{id}', [AdminLivreurController::class, 'update']);
+        Route::delete('/livreurs/{id}', [AdminLivreurController::class, 'destroy']);
 
         Route::get('/products', [AdminProductController::class, 'index']);
         Route::post('/products', [AdminProductController::class, 'store']);

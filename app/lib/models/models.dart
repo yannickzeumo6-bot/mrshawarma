@@ -1,14 +1,19 @@
 class AppUser {
   final int id;
   final String name, email, role;
-  AppUser({required this.id, required this.name, required this.email, required this.role});
-  factory AppUser.fromJson(Map<String, dynamic> j) => AppUser(
-        id: (j['id'] as num).toInt(),
-        name: j['name']?.toString() ?? '',
-        email: j['email']?.toString() ?? '',
-        role: j['role']?.toString() ?? 'client',
-      );
-  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'email': email, 'role': role};
+  final String? phone; // numéro national à 9 chiffres (ex. 690000000)
+  AppUser({required this.id, required this.name, required this.email, required this.role, this.phone});
+  factory AppUser.fromJson(Map<String, dynamic> j) {
+    final ph = j['phone']?.toString() ?? '';
+    return AppUser(
+      id: (j['id'] as num).toInt(),
+      name: j['name']?.toString() ?? '',
+      email: j['email']?.toString() ?? '',
+      role: j['role']?.toString() ?? 'client',
+      phone: ph.isEmpty ? null : ph,
+    );
+  }
+  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'email': email, 'role': role, 'phone': phone};
   String get firstName => name.trim().isEmpty ? '' : name.trim().split(' ').first;
 }
 
@@ -139,7 +144,7 @@ class DeliveryQuote {
 
 class OrderModel {
   final String ref, status, paymentMethod, address;
-  final String? promoTitle, clientName, clientEmail;
+  final String? promoTitle, clientName, clientEmail, clientPhone;
   final List<Map<String, dynamic>> items;
   final int subtotal, promoDiscount, promoAmount, deliveryFee, total, placedAt;
   final double? distanceKm, lat, lng;
@@ -158,6 +163,7 @@ class OrderModel {
     this.promoTitle,
     this.clientName,
     this.clientEmail,
+    this.clientPhone,
     this.distanceKm,
     this.lat,
     this.lng,
@@ -183,6 +189,7 @@ class OrderModel {
       lng: (ac?['lng'] as num?)?.toDouble(),
       clientName: c?['name']?.toString(),
       clientEmail: c?['email']?.toString(),
+      clientPhone: (c?['phone']?.toString() ?? '').isEmpty ? null : c?['phone']?.toString(),
     );
   }
 
@@ -213,4 +220,30 @@ class AdminStats {
         inProgress = (j['inProgress'] as num?)?.toInt() ?? 0,
         todayOrders = (j['todayOrders'] as num?)?.toInt() ?? 0,
         todayRevenue = (j['todayRevenue'] as num?)?.toInt() ?? 0;
+}
+
+/// Un livreur (liste gérée par l'admin).
+class Livreur {
+  final int id;
+  final String name;
+  final String? phone, email;
+  Livreur.fromJson(Map<String, dynamic> j)
+      : id = (j['id'] as num).toInt(),
+        name = j['name']?.toString() ?? '',
+        phone = (j['phone']?.toString() ?? '').isEmpty ? null : j['phone'].toString(),
+        email = (j['email']?.toString() ?? '').isEmpty ? null : j['email'].toString();
+}
+
+/// Un message de la discussion client ⇄ livreur.
+class ChatMessage {
+  final int id, createdAt;
+  final String senderRole, body;
+  final String? senderName;
+  ChatMessage.fromJson(Map<String, dynamic> j)
+      : id = (j['id'] as num).toInt(),
+        createdAt = (j['createdAt'] as num?)?.toInt() ?? 0,
+        senderRole = j['senderRole']?.toString() ?? '',
+        senderName = j['senderName']?.toString(),
+        body = j['body']?.toString() ?? '';
+  DateTime get time => DateTime.fromMillisecondsSinceEpoch(createdAt);
 }

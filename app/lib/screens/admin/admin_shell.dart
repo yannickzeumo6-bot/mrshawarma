@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../services/api_client.dart';
 import '../../services/push_service.dart';
 import '../../widgets/fx.dart';
+import 'admin_livreurs_screen.dart';
 import 'admin_menu_screen.dart';
 import 'admin_orders_screen.dart';
 import 'admin_promos_screen.dart';
@@ -49,7 +50,7 @@ class _AdminShellState extends State<AdminShell> {
           ),
         ],
       ),
-      body: FadeIndexedStack(index: _tab, children: const [AdminOrdersScreen(), AdminMenuScreen(), AdminPromosScreen()]),
+      body: FadeIndexedStack(index: _tab, children: const [AdminOrdersScreen(), AdminMenuScreen(), AdminPromosScreen(), AdminLivreursScreen()]),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,
         onDestinationSelected: (i) => setState(() => _tab = i),
@@ -60,6 +61,7 @@ class _AdminShellState extends State<AdminShell> {
           ),
           const NavigationDestination(icon: Icon(Icons.restaurant_menu), label: 'Menu'),
           const NavigationDestination(icon: Icon(Icons.local_offer_outlined), label: 'Promotions'),
+          const NavigationDestination(icon: Icon(Icons.two_wheeler), label: 'Livreurs'),
         ],
       ),
     );

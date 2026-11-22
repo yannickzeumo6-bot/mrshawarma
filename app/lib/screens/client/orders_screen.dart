@@ -6,6 +6,7 @@ import '../../models/models.dart';
 import '../../providers/orders_provider.dart';
 import '../../widgets/common.dart';
 import '../../widgets/fx.dart';
+import '../shared/chat_screen.dart';
 
 class OrdersScreen extends StatelessWidget {
   const OrdersScreen({super.key});
@@ -109,6 +110,16 @@ class _OrderCardState extends State<_OrderCard> {
           Text('${o.paymentLabel} · livraison ${o.deliveryFee == 0 ? 'gratuite' : fcfa(o.deliveryFee)}', style: const TextStyle(color: Brand.dim, fontSize: 12.5)),
           Text(fcfa(o.total), style: const TextStyle(fontWeight: FontWeight.w900, color: Brand.gold, fontSize: 16)),
         ]),
+        if (!done) ...[
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => ChatScreen(orderRef: o.ref, myRole: 'client', title: 'Mon livreur · ${o.ref}'),
+            )),
+            icon: const Icon(Icons.chat_bubble_outline, size: 18),
+            label: const Text('Écrire au livreur'),
+          ),
+        ],
         if (o.status == 'delivering') ...[
           const SizedBox(height: 12),
           GoldButton(label: "J'ai reçu ma commande", icon: Icons.check_circle_outline, busy: _busy, onPressed: _confirm),

@@ -185,7 +185,7 @@ class OrderController extends Controller
     {
         $data = $this->serialize($order);
         $c = $order->client;
-        $data['client'] = $c ? ['name' => $c->name, 'email' => $c->email] : null;
+        $data['client'] = $c ? ['name' => $c->name, 'email' => $c->email, 'phone' => $c->phone] : null;
 
         return $data;
     }

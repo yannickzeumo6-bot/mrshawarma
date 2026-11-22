@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/format.dart';
+import '../../core/phone.dart';
 import '../../core/theme.dart';
 import '../../models/models.dart';
 import '../../providers/auth_provider.dart';
@@ -10,6 +11,7 @@ import '../../services/api_client.dart';
 import '../../services/push_service.dart';
 import '../../widgets/common.dart';
 import '../../widgets/fx.dart';
+import '../shared/chat_screen.dart';
 
 class LivreurShell extends StatefulWidget {
   const LivreurShell({super.key});
@@ -162,6 +164,24 @@ class _DeliveryCardState extends State<_DeliveryCard> {
     }
   }
 
+  Future<void> _call() async {
+    final phone = widget.o.clientPhone;
+    if (phone == null) return;
+    try {
+      final ok = await launchUrl(dialUri(phone));
+      if (!ok && mounted) snack(context, "Impossible de lancer l'appel.");
+    } catch (_) {
+      if (mounted) snack(context, "Impossible de lancer l'appel.");
+    }
+  }
+
+  void _chat() {
+    final o = widget.o;
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => ChatScreen(orderRef: o.ref, myRole: 'livreur', title: 'Chat · ${o.clientName ?? 'Client'}'),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     final o = widget.o;
@@ -182,6 +202,14 @@ class _DeliveryCardState extends State<_DeliveryCard> {
         ]),
         const SizedBox(height: 4),
         Text('${o.clientName ?? 'Client'} · ${dateTimeFr(o.placed)}', style: const TextStyle(color: Brand.dim, fontSize: 12.5)),
+        const SizedBox(height: 4),
+        Text(o.clientPhone != null ? '📞 ${prettyPhone(o.clientPhone!)}' : '📞 Pas de numéro enregistré', style: const TextStyle(color: Brand.dim, fontSize: 12.5)),
+        const SizedBox(height: 10),
+        Row(children: [
+          Expanded(child: OutlinedButton.icon(onPressed: o.clientPhone == null ? null : _call, icon: const Icon(Icons.call_outlined, size: 18), label: const Text('Appeler'))),
+          const SizedBox(width: 10),
+          Expanded(child: OutlinedButton.icon(onPressed: _chat, icon: const Icon(Icons.chat_bubble_outline, size: 18), label: const Text('Message'))),
+        ]),
         const SizedBox(height: 12),
         for (final it in o.items)
           Padding(

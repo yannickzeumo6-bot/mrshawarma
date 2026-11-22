@@ -5,7 +5,7 @@ import '../../providers/auth_provider.dart';
 import '../../widgets/common.dart';
 import '../../widgets/fx.dart';
 
-/// Page de connexion partagée. role = 'client' (connexion + inscription) ou 'admin' (connexion seule).
+/// Page de connexion partagée. role = 'client' (connexion + inscription), 'admin' (email) ou 'livreur' (téléphone).
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, required this.role});
   final String role;
@@ -18,30 +18,42 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _error;
   final _name = TextEditingController();
   final _email = TextEditingController();
+  final _phone = TextEditingController();
   final _pass = TextEditingController();
 
   bool get _isAdmin => widget.role != 'client'; // admin et livreur : connexion seule
+  bool get _isLivreur => widget.role == 'livreur'; // le livreur se connecte avec son téléphone
+  String get _idLabel => _isLivreur ? 'Téléphone' : (widget.role == 'admin' || _register ? 'Email' : 'Email ou téléphone');
+  String _digits(String v) => v.replaceAll(RegExp(r'\D'), '');
   String get _roleLabel => widget.role == 'admin' ? 'ESPACE ADMINISTRATEUR' : 'ESPACE LIVREUR';
 
   @override
   void dispose() {
     _name.dispose();
     _email.dispose();
+    _phone.dispose();
     _pass.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     final auth = context.read<AuthProvider>();
-    if (_register && _name.text.trim().isEmpty) return setState(() => _error = 'Le nom est requis.');
-    if (!_email.text.contains('@')) return setState(() => _error = 'Email invalide.');
-    if (_pass.text.length < (_register ? 8 : 1)) return setState(() => _error = 'Mot de passe : 8 caractères minimum.');
+    final id = _email.text.trim();
+    if (_register) {
+      if (_name.text.trim().isEmpty) return setState(() => _error = 'Le nom est requis.');
+      if (_digits(_phone.text).length < 9) return setState(() => _error = 'Numéro de téléphone invalide (ex. 6 90 00 00 00).');
+      if (!id.contains('@')) return setState(() => _error = 'Email invalide.');
+      if (_pass.text.length < 8) return setState(() => _error = 'Mot de passe : 8 caractères minimum.');
+    } else {
+      if (id.isEmpty) return setState(() => _error = _isLivreur ? 'Entre ton numéro de téléphone.' : 'Entre ton ${widget.role == 'admin' ? 'email' : 'email ou ton téléphone'}.');
+      if (_pass.text.isEmpty) return setState(() => _error = 'Entre ton mot de passe.');
+    }
     setState(() {
       _busy = true;
       _error = null;
     });
     try {
-      _register ? await auth.register(_name.text, _email.text, _pass.text) : await auth.login(_email.text, _pass.text);
+      _register ? await auth.register(_name.text, _email.text, _phone.text, _pass.text) : await auth.login(_email.text, _pass.text);
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
     }
@@ -128,13 +140,24 @@ class _LoginScreenState extends State<LoginScreen> {
                     decoration: const InputDecoration(labelText: 'Nom complet', prefixIcon: Icon(Icons.person_outline)),
                   ),
                   const SizedBox(height: 12),
+                  TextField(
+                    controller: _phone,
+                    keyboardType: TextInputType.phone,
+                    textInputAction: TextInputAction.next,
+                    decoration: const InputDecoration(labelText: 'Téléphone', hintText: '6 90 00 00 00', prefixIcon: Icon(Icons.phone_outlined)),
+                  ),
+                  const SizedBox(height: 12),
                 ],
                 TextField(
                   controller: _email,
-                  keyboardType: TextInputType.emailAddress,
+                  keyboardType: _isLivreur ? TextInputType.phone : TextInputType.emailAddress,
                   autocorrect: false,
                   textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.mail_outline)),
+                  decoration: InputDecoration(
+                    labelText: _idLabel,
+                    hintText: _isLivreur ? '6 90 00 00 00' : null,
+                    prefixIcon: Icon(_isLivreur ? Icons.phone_outlined : Icons.mail_outline),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
