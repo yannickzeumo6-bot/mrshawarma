@@ -4,6 +4,7 @@ services:
     name: mrshawarma
     runtime: docker
     plan: free
+    region: frankfurt
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     healthCheckPath: /up
