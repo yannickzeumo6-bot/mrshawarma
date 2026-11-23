@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -36,11 +37,11 @@ class ApiClient {
 
   /// Envoi multipart (champs texte + photo optionnelle).
   Future<dynamic> postMultipart(String path, Map<String, String> fields,
-      {String? filePath, String fileField = 'image'}) async {
+      {Uint8List? fileBytes, String fileName = 'photo.jpg', String fileField = 'image'}) async {
     final req = http.MultipartRequest('POST', _uri(path))
       ..headers.addAll(_auth)
       ..fields.addAll(fields);
-    if (filePath != null) req.files.add(await http.MultipartFile.fromPath(fileField, filePath));
+    if (fileBytes != null) req.files.add(http.MultipartFile.fromBytes(fileField, fileBytes, filename: fileName));
     return _run(req, const Duration(seconds: 60));
   }
 

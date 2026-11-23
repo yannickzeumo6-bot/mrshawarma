@@ -1,0 +1,90 @@
+name: Version web iPhone (client, livreur, admin)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['app/**', '.github/workflows/build-web.yml']
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lire la version de Flutter
+        id: fv
+        run: echo "version=$(cat app/.flutter-version | tr -d '\r\n ')" >> "$GITHUB_OUTPUT"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ steps.fv.outputs.version }}
+          channel: stable
+          cache: true
+
+      - name: Vérifier l'adresse du serveur
+        env:
+          API_BASE: ${{ vars.API_BASE }}
+        run: |
+          if [ -z "$API_BASE" ]; then echo "La variable API_BASE est vide."; exit 1; fi
+
+      - name: Générer le projet web
+        working-directory: app
+        run: |
+          flutter create --org com.mrshawarma --project-name mrshawarma_app --platforms=web .
+          rm -f test/widget_test.dart
+          flutter pub get
+          pip install pillow
+
+      - name: Construire les 3 applications
+        working-directory: app
+        env:
+          API_BASE: ${{ vars.API_BASE }}
+        run: |
+          REPO="${GITHUB_REPOSITORY#*/}"
+          mkdir -p ../site
+          build() { # $1=dossier $2=fichier main $3=titre $4=couleur
+            python3 tools/prepare_web.py "$3" "$4"
+            flutter build web --release -t "$2" \
+              --dart-define=API_BASE="$API_BASE" \
+              --base-href "/$REPO/$1/"
+            rm -rf "../site/$1" && cp -r build/web "../site/$1"
+          }
+          build client  lib/main.dart         "Mr Shawarma"         "#0B0805"
+          build livreur lib/main_livreur.dart "Mr Shawarma Livreur" "#0B0805"
+          build admin   lib/main_admin.dart   "Mr Shawarma Admin"   "#0B0805"
+          cat > ../site/index.html <<HTML
+          <!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
+          <title>Mr Shawarma</title>
+          <body style="font-family:sans-serif;background:#0B0805;color:#fff;text-align:center;padding:40px">
+          <h1>Mr Shawarma</h1>
+          <p><a style="color:#E8B04A" href="client/">Application Client</a></p>
+          <p><a style="color:#E8B04A" href="livreur/">Application Livreur</a></p>
+          <p><a style="color:#E8B04A" href="admin/">Application Admin</a></p>
+          </body>
+          HTML
+          touch ../site/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.dep.outputs.page_url }}
+    steps:
+      - id: dep
+        uses: actions/deploy-pages@v4

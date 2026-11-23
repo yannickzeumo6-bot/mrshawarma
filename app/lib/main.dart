@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/phone_frame.dart';
@@ -18,8 +19,10 @@ import 'widgets/fx.dart';
 /// Application CLIENT.  flutter run --flavor client -t lib/main.dart
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await NotificationService.instance.init();
-  await PushService.instance.init();
+  if (!kIsWeb) {
+    await NotificationService.instance.init();
+    await PushService.instance.init();
+  }
   final api = ApiClient();
   final auth = AuthProvider(api, role: 'client');
   await auth.restore();

@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -22,7 +22,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   late final _category = TextEditingController(text: widget.product?.category ?? 'shawarma');
   late final _flavors = TextEditingController(text: widget.product?.flavors.join(', ') ?? '');
   late bool _available = widget.product?.available ?? true;
-  String? _imagePath;
+  Uint8List? _imageBytes;
+  String _imageName = 'photo.jpg';
   bool _removeImage = false;
   bool _saving = false;
 
@@ -38,8 +39,12 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
   Future<void> _pickImage() async {
     final x = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 1200, imageQuality: 80);
-    if (x != null) setState(() {
-      _imagePath = x.path;
+    if (x == null) return;
+    final bytes = await x.readAsBytes();
+    if (!mounted) return;
+    setState(() {
+      _imageBytes = bytes;
+      _imageName = x.name.isNotEmpty ? x.name : 'photo.jpg';
       _removeImage = false;
     });
   }
@@ -59,7 +64,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
             price: price,
             flavors: _flavors.text.trim(),
             available: _available,
-            imagePath: _imagePath,
+            imageBytes: _imageBytes,
+            imageName: _imageName,
             removeImage: _removeImage,
           );
       if (mounted) Navigator.pop(context);
@@ -98,8 +104,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
           child: GestureDetector(
             onTap: _pickImage,
             child: Stack(alignment: Alignment.bottomRight, children: [
-              _imagePath != null
-                  ? ClipRRect(borderRadius: BorderRadius.circular(22), child: Image.file(File(_imagePath!), width: 150, height: 150, fit: BoxFit.cover))
+              _imageBytes != null
+                  ? ClipRRect(borderRadius: BorderRadius.circular(22), child: Image.memory(_imageBytes!, width: 150, height: 150, fit: BoxFit.cover))
                   : ProductImage(emoji: '📷', url: existingUrl, asset: widget.product?.assetImage, size: 150, radius: 22),
               Container(
                 margin: const EdgeInsets.all(8),
@@ -110,10 +116,10 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
             ]),
           ),
         ),
-        if (_imagePath != null || existingUrl != null)
+        if (_imageBytes != null || existingUrl != null)
           TextButton(
             onPressed: () => setState(() {
-              _imagePath = null;
+              _imageBytes = null;
               _removeImage = true;
             }),
             child: const Text('Retirer la photo', style: TextStyle(color: Brand.danger)),

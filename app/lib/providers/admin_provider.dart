@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../core/config.dart';
@@ -137,7 +138,8 @@ class AdminProvider extends ChangeNotifier {
     required int price,
     required String flavors,
     required bool available,
-    String? imagePath,
+    Uint8List? imageBytes,
+    String imageName = 'photo.jpg',
     bool removeImage = false,
   }) async {
     await _api.postMultipart(
@@ -151,7 +153,8 @@ class AdminProvider extends ChangeNotifier {
         'available': available ? '1' : '0',
         if (removeImage) 'removeImage': '1',
       },
-      filePath: imagePath,
+      fileBytes: imageBytes,
+      fileName: imageName,
     );
     await loadProducts();
   }
