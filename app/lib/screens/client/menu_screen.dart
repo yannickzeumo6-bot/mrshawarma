@@ -74,8 +74,37 @@ class _MenuScreenState extends State<MenuScreen> {
       );
       if (flavor == null) return;
     }
+    String? piment;
+    if (p.category == 'shawarma') {
+      piment = await showModalBottomSheet<String>(
+        context: context,
+        backgroundColor: Brand.surface,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        builder: (_) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(p.name, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900)),
+              const Text('Avec ou sans piment ?', style: TextStyle(color: Brand.dim)),
+              const SizedBox(height: 16),
+              Wrap(spacing: 10, runSpacing: 10, children: [
+                ActionChip(
+                  label: const Padding(padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4), child: Text('🌶️ Avec piment')),
+                  onPressed: () => Navigator.pop(context, 'avec'),
+                ),
+                ActionChip(
+                  label: const Padding(padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4), child: Text('Sans piment')),
+                  onPressed: () => Navigator.pop(context, 'sans'),
+                ),
+              ]),
+            ]),
+          ),
+        ),
+      );
+      if (piment == null) return;
+    }
     HapticFeedback.lightImpact();
-    cart.add(p, flavor: flavor);
+    cart.add(p, flavor: flavor, piment: piment);
   }
 
   @override
@@ -291,7 +320,7 @@ class _ProductTile extends StatelessWidget {
     Widget action;
     if (off) {
       action = const Pill('Épuisé', color: Brand.danger);
-    } else if (qty > 0 && !p.hasFlavors) {
+    } else if (qty > 0 && !p.hasFlavors && p.category != 'shawarma') {
       action = Container(
         decoration: BoxDecoration(color: Brand.ink, borderRadius: BorderRadius.circular(22), border: Border.all(color: Brand.gold.withOpacity(0.55))),
         child: Row(mainAxisSize: MainAxisSize.min, children: [

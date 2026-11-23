@@ -103,6 +103,16 @@ class OrderController extends Controller
                 }
             }
 
+            $piment = '';
+            if ($product->category === 'shawarma') {
+                $p = (string) ($raw['customization']['piment'] ?? 'avec');
+                if (! in_array($p, ['avec', 'sans'], true)) {
+                    return $this->fail("Choix du piment invalide pour « {$product->name} ».");
+                }
+                $piment = $p === 'sans' ? 'Sans piment' : 'Avec piment';
+            }
+            $options = implode(' · ', array_filter([$flavor !== '' ? "Saveur : {$flavor}" : '', $piment]));
+
             $unit = (int) $product->base_price;
             $subtotal += $unit * $qty;
             $lines[] = ['productId' => $product->id, 'category' => $product->category, 'unitPrice' => $unit, 'qty' => $qty];
@@ -112,6 +122,7 @@ class OrderController extends Controller
                 'name' => $product->name,
                 'qty' => $qty,
                 'unitPrice' => $unit,
+                'options' => $options,
                 'summary' => $flavor !== '' ? "Saveur : {$flavor}" : ($product->description ?? ''),
             ];
         }

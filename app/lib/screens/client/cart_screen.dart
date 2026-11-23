@@ -204,6 +204,7 @@ class _CartScreenState extends State<CartScreen> {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(l.product.name, style: const TextStyle(fontWeight: FontWeight.w700)),
                   if (l.flavor != null) Text('Saveur : ${l.flavor}', style: const TextStyle(color: Brand.dim, fontSize: 12)),
+                  if (l.piment != null) Text(l.piment == 'sans' ? 'Sans piment' : '🌶️ Avec piment', style: const TextStyle(color: Brand.dim, fontSize: 12)),
                   Text(fcfa(l.total), style: const TextStyle(color: Brand.gold, fontWeight: FontWeight.w800)),
                 ]),
               ),

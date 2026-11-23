@@ -214,7 +214,7 @@ class _DeliveryCardState extends State<_DeliveryCard> {
         for (final it in o.items)
           Padding(
             padding: const EdgeInsets.only(bottom: 2),
-            child: Text('${it['qty']} × ${it['name']}${(it['summary'] ?? '').toString().startsWith('Saveur') ? ' · ${it['summary']}' : ''}', style: const TextStyle(fontSize: 14)),
+            child: Text('${it['qty']} × ${it['name']}${(it['options'] ?? '').toString().isNotEmpty ? ' · ${it['options']}' : ''}', style: const TextStyle(fontSize: 14)),
           ),
         const SizedBox(height: 12),
         Container(

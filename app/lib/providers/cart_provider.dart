@@ -6,9 +6,10 @@ import '../models/models.dart';
 class CartLine {
   final Product product;
   final String? flavor;
+  final String? piment; // 'avec' | 'sans' (shawarmas uniquement)
   int qty;
-  CartLine(this.product, {this.flavor, this.qty = 1});
-  String get key => '${product.id}|${flavor ?? ''}';
+  CartLine(this.product, {this.flavor, this.piment, this.qty = 1});
+  String get key => '${product.id}|${flavor ?? ''}|${piment ?? ''}';
   int get total => product.basePrice * qty;
 }
 
@@ -31,12 +32,12 @@ class CartProvider extends ChangeNotifier {
     return math.min(d, subtotal);
   }
 
-  void add(Product p, {String? flavor}) {
-    final i = _lines.indexWhere((l) => l.key == '${p.id}|${flavor ?? ''}');
+  void add(Product p, {String? flavor, String? piment}) {
+    final i = _lines.indexWhere((l) => l.key == '${p.id}|${flavor ?? ''}|${piment ?? ''}');
     if (i >= 0) {
       _lines[i].qty++;
     } else {
-      _lines.add(CartLine(p, flavor: flavor));
+      _lines.add(CartLine(p, flavor: flavor, piment: piment));
     }
     notifyListeners();
   }
@@ -88,7 +89,10 @@ class CartProvider extends ChangeNotifier {
       .map((l) => {
             'productId': l.product.id,
             'qty': l.qty,
-            'customization': l.flavor == null ? <String, dynamic>{} : {'saveur': l.flavor},
+            'customization': {
+              if (l.flavor != null) 'saveur': l.flavor,
+              if (l.piment != null) 'piment': l.piment,
+            },
           })
       .toList();
 }

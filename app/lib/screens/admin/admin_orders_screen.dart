@@ -143,7 +143,7 @@ class _AdminOrderCardState extends State<_AdminOrderCard> {
         Text('${o.clientName ?? 'Client'}${o.clientPhone != null ? ' · ${prettyPhone(o.clientPhone!)}' : ''} · ${dateTimeFr(o.placed)}', style: const TextStyle(color: Brand.dim, fontSize: 12.5)),
         const SizedBox(height: 8),
         for (final it in o.items)
-          Text('${it['qty']} × ${it['name']}${(it['summary'] ?? '').toString().startsWith('Saveur') ? ' · ${it['summary']}' : ''}', style: const TextStyle(fontSize: 13.5)),
+          Text('${it['qty']} × ${it['name']}${(it['options'] ?? '').toString().isNotEmpty ? ' · ${it['options']}' : ''}', style: const TextStyle(fontSize: 13.5)),
         const SizedBox(height: 8),
         Text('📍 ${o.address}${o.distanceKm != null ? '  (${o.distanceKm} km)' : ''}', style: const TextStyle(color: Brand.dim, fontSize: 12.5)),
         if (o.promoTitle != null && o.promoAmount > 0)

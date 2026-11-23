@@ -99,7 +99,7 @@ class _OrderCardState extends State<_OrderCard> {
         for (final it in o.items)
           Padding(
             padding: const EdgeInsets.only(bottom: 2),
-            child: Text('${it['qty']} × ${it['name']}${(it['summary'] ?? '').toString().startsWith('Saveur') ? ' · ${it['summary']}' : ''}', style: const TextStyle(fontSize: 13.5)),
+            child: Text('${it['qty']} × ${it['name']}${(it['options'] ?? '').toString().isNotEmpty ? ' · ${it['options']}' : ''}', style: const TextStyle(fontSize: 13.5)),
           ),
         const SizedBox(height: 8),
         Text('📍 ${o.address}', style: const TextStyle(color: Brand.dim, fontSize: 12.5)),
